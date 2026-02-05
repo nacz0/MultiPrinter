@@ -1,0 +1,912 @@
+﻿<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MultiPrinter A4</title>
+  <style>
+    :root {
+      --bg: #f2f4f7;
+      --surface: #ffffff;
+      --ink: #1f2933;
+      --muted: #637083;
+      --accent: #0f766e;
+      --line: #d9e2ec;
+      --danger: #b42318;
+      --page-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 15% 10%, #d9f0ec 0%, transparent 30%),
+        radial-gradient(circle at 95% 5%, #e3eef9 0%, transparent 34%),
+        var(--bg);
+      min-height: 100vh;
+    }
+
+    .app {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 20px;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 20px;
+    }
+
+    .panel,
+    .preview-wrap {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+    }
+
+    .panel {
+      padding: 18px;
+      position: sticky;
+      top: 14px;
+      height: fit-content;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 1.3rem;
+      letter-spacing: 0.2px;
+    }
+
+    .subtitle {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.35;
+    }
+
+    .control {
+      margin-bottom: 12px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--ink);
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      font: inherit;
+      background: #fff;
+      color: var(--ink);
+    }
+
+    input:focus,
+    select:focus,
+    button:focus {
+      outline: 2px solid #99f6e4;
+      outline-offset: 1px;
+      border-color: var(--accent);
+    }
+
+    input[type="file"] {
+      padding: 8px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .actions button {
+      cursor: pointer;
+      transition: transform 0.08s ease, box-shadow 0.12s ease;
+    }
+
+    .actions button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(15, 118, 110, 0.15);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--ink);
+    }
+
+    .meta {
+      margin-top: 14px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .meta strong { color: var(--ink); }
+
+    .crop-tools {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+
+    .crop-title {
+      margin: 0 0 8px;
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .crop-selected {
+      margin: 0 0 8px;
+      font-size: 0.86rem;
+      color: var(--muted);
+      min-height: 2.5em;
+    }
+
+    .nudge-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 44px);
+      justify-content: center;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .nudge-grid button {
+      padding: 8px 0;
+      border-radius: 8px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .nudge-step {
+      display: grid;
+      grid-template-columns: 1fr 90px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .nudge-step label {
+      margin: 0;
+      font-size: 0.84rem;
+      color: var(--muted);
+    }
+
+    .nudge-step input {
+      padding: 7px 8px;
+      font-size: 0.86rem;
+    }
+
+    .error {
+      margin-top: 10px;
+      color: var(--danger);
+      font-size: 0.9rem;
+      min-height: 1.2em;
+    }
+
+    .preview-wrap {
+      padding: 16px;
+      min-height: 70vh;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 14px;
+    }
+
+    .preview-header h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .preview-header p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .pages {
+      display: grid;
+      gap: 18px;
+      justify-content: center;
+    }
+
+    .sheet {
+      background: white;
+      box-shadow: var(--page-shadow);
+      border: 1px solid #e5e7eb;
+      position: relative;
+      overflow: hidden;
+      transform-origin: top center;
+    }
+
+    .sheet-grid {
+      width: 100%;
+      height: 100%;
+      display: grid;
+      align-content: stretch;
+      justify-content: stretch;
+      background: #fff;
+    }
+
+    .photo-cell {
+      background: #f3f4f6;
+      border: 1px solid #eceff3;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .photo-cell img {
+      width: 100%;
+      height: 100%;
+      object-position: center;
+      display: block;
+    }
+
+    .photo-cell .fit-contain { object-fit: contain; background: #f8fafc; }
+    .photo-cell .fit-cover { object-fit: cover; }
+    .photo-cell.is-pannable { cursor: grab; }
+    .photo-cell.is-pannable.dragging { cursor: grabbing; }
+    .photo-cell.is-selected {
+      outline: 3px solid #0f766e;
+      outline-offset: -3px;
+    }
+    .photo-cell.is-pannable img {
+      user-select: none;
+      -webkit-user-drag: none;
+      touch-action: none;
+      pointer-events: none;
+    }
+
+    .cell-label {
+      position: absolute;
+      bottom: 4px;
+      right: 4px;
+      background: rgba(17, 24, 39, 0.7);
+      color: #fff;
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      pointer-events: none;
+    }
+
+    .sheet-number {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      color: #6b7280;
+      font-size: 12px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 2px 6px;
+      border-radius: 999px;
+      border: 1px solid #e5e7eb;
+    }
+
+    @media (max-width: 1040px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .panel {
+        position: static;
+      }
+    }
+
+    @media print {
+      :root {
+        --print-scale: 1;
+      }
+
+      body {
+        margin: 0;
+        background: #fff;
+      }
+
+      .panel,
+      .preview-header p,
+      .sheet-number,
+      .cell-label {
+        display: none !important;
+      }
+
+      .app,
+      .preview-wrap,
+      .pages {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        box-shadow: none;
+        max-width: none;
+        width: auto;
+      }
+
+      .sheet {
+        margin: 0;
+        border: 0;
+        box-shadow: none;
+        break-after: page;
+        page-break-after: always;
+      }
+
+      .sheet:last-child {
+        break-after: auto;
+        page-break-after: auto;
+      }
+
+      @page {
+        size: A4 portrait;
+        margin: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="panel">
+      <h1>MultiPrinter A4</h1>
+      <p class="subtitle">Załaduj folder zdjęć, wybierz ile zdjęć ma trafić na jedną kartkę A4 i wydrukuj gotowy układ.</p>
+
+      <div class="control">
+        <label for="folderInput">Folder ze zdjęciami</label>
+        <input id="folderInput" type="file" webkitdirectory directory multiple accept="image/*" />
+      </div>
+
+      <div class="row">
+        <div class="control">
+          <label for="photosPerPage">Zdjęć na stronę</label>
+          <input id="photosPerPage" type="number" min="1" max="64" value="6" />
+        </div>
+        <div class="control">
+          <label for="orientation">Orientacja A4</label>
+          <select id="orientation">
+            <option value="portrait">Pionowa</option>
+            <option value="landscape">Pozioma</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="control">
+          <label for="marginMm">Margines (mm)</label>
+          <input id="marginMm" type="number" min="0" max="40" step="1" value="8" />
+        </div>
+        <div class="control">
+          <label for="gapMm">Odstęp (mm)</label>
+          <input id="gapMm" type="number" min="0" max="20" step="1" value="3" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="control">
+          <label for="fitMode">Dopasowanie zdjęcia</label>
+          <select id="fitMode">
+            <option value="cover">Wypełnij (przytnij)</option>
+            <option value="contain">Całe zdjęcie (paski)</option>
+          </select>
+        </div>
+        <div class="control">
+          <label for="showLabels">Numeracja komórek</label>
+          <select id="showLabels">
+            <option value="no">Nie</option>
+            <option value="yes">Tak</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button id="renderBtn" class="btn-secondary" type="button">Odśwież układ</button>
+        <button id="printBtn" class="btn-primary" type="button">Drukuj / PDF</button>
+      </div>
+      <div class="actions">
+        <button id="resetCropBtn" class="btn-secondary" type="button">Reset kadrowania</button>
+      </div>
+      <div class="crop-tools">
+        <p class="crop-title">Precyzyjne kadrowanie</p>
+        <p id="selectedCropInfo" class="crop-selected">Kliknij zdjęcie w podglądzie, aby je wybrać.</p>
+        <div class="nudge-grid">
+          <button id="nudgeUpBtn" type="button" aria-label="Przesuń kadr w górę">↑</button>
+          <span></span>
+          <span></span>
+          <button id="nudgeLeftBtn" type="button" aria-label="Przesuń kadr w lewo">←</button>
+          <button id="nudgeDownBtn" type="button" aria-label="Przesuń kadr w dół">↓</button>
+          <button id="nudgeRightBtn" type="button" aria-label="Przesuń kadr w prawo">→</button>
+        </div>
+        <div class="nudge-step">
+          <label for="nudgeStepInput">Krok przesunięcia (%)</label>
+          <input id="nudgeStepInput" type="number" min="0.5" max="20" step="0.5" value="2" />
+        </div>
+      </div>
+
+      <div id="meta" class="meta">Brak załadowanych zdjęć.</div>
+      <div id="error" class="error" aria-live="polite"></div>
+    </aside>
+
+    <main class="preview-wrap">
+      <div class="preview-header">
+        <h2>Podgląd stron A4</h2>
+        <p>Sprawdź układ i użyj „Drukuj / PDF”.</p>
+      </div>
+      <section id="pages" class="pages"></section>
+    </main>
+  </div>
+
+  <script>
+    const MM_TO_PX = 3.7795275591;
+    const A4_PORTRAIT = { widthMm: 210, heightMm: 297 };
+
+    const folderInput = document.getElementById('folderInput');
+    const photosPerPageInput = document.getElementById('photosPerPage');
+    const orientationSelect = document.getElementById('orientation');
+    const marginInput = document.getElementById('marginMm');
+    const gapInput = document.getElementById('gapMm');
+    const fitModeSelect = document.getElementById('fitMode');
+    const showLabelsSelect = document.getElementById('showLabels');
+    const renderBtn = document.getElementById('renderBtn');
+    const printBtn = document.getElementById('printBtn');
+    const resetCropBtn = document.getElementById('resetCropBtn');
+    const selectedCropInfoEl = document.getElementById('selectedCropInfo');
+    const nudgeStepInput = document.getElementById('nudgeStepInput');
+    const nudgeUpBtn = document.getElementById('nudgeUpBtn');
+    const nudgeDownBtn = document.getElementById('nudgeDownBtn');
+    const nudgeLeftBtn = document.getElementById('nudgeLeftBtn');
+    const nudgeRightBtn = document.getElementById('nudgeRightBtn');
+    const pagesEl = document.getElementById('pages');
+    const metaEl = document.getElementById('meta');
+    const errorEl = document.getElementById('error');
+
+    const LOCAL_STORAGE_CROPS_KEY = 'multiPrinter.cropPositions.v1';
+    let imageItems = [];
+    const cropPositions = new Map();
+    let selectedItemId = null;
+    let selectedItemName = '';
+    let cropPersistTimer = null;
+
+    const byNameAsc = (a, b) => a.name.localeCompare(b.name, 'pl', { numeric: true, sensitivity: 'base' });
+
+    function setError(message) {
+      errorEl.textContent = message || '';
+    }
+
+    function scheduleCropPersist() {
+      if (cropPersistTimer) {
+        clearTimeout(cropPersistTimer);
+      }
+      cropPersistTimer = setTimeout(() => {
+        const serialized = {};
+        cropPositions.forEach((pos, id) => {
+          serialized[id] = {
+            x: Number(pos.x.toFixed(2)),
+            y: Number(pos.y.toFixed(2)),
+          };
+        });
+        try {
+          localStorage.setItem(LOCAL_STORAGE_CROPS_KEY, JSON.stringify(serialized));
+        } catch (error) {
+          // Ignore storage errors to keep the app usable in private mode.
+        }
+      }, 120);
+    }
+
+    function loadCropPositionsFromStorage() {
+      let raw = null;
+      try {
+        raw = localStorage.getItem(LOCAL_STORAGE_CROPS_KEY);
+      } catch (error) {
+        raw = null;
+      }
+      if (!raw) {
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(raw);
+        Object.entries(parsed).forEach(([id, pos]) => {
+          if (typeof pos?.x === 'number' && typeof pos?.y === 'number') {
+            cropPositions.set(id, { x: clamp(pos.x, 0, 100), y: clamp(pos.y, 0, 100) });
+          }
+        });
+      } catch (error) {
+        // Ignore invalid localStorage payload.
+      }
+    }
+
+    function setNudgeButtonsDisabled(disabled) {
+      [nudgeUpBtn, nudgeDownBtn, nudgeLeftBtn, nudgeRightBtn].forEach((button) => {
+        button.disabled = disabled;
+      });
+    }
+
+    function refreshSelectionStyles() {
+      const cells = pagesEl.querySelectorAll('.photo-cell[data-item-id]');
+      cells.forEach((cell) => {
+        cell.classList.toggle('is-selected', cell.dataset.itemId === selectedItemId);
+      });
+    }
+
+    function updateSelectedCropInfo() {
+      if (!selectedItemId) {
+        selectedCropInfoEl.textContent = 'Kliknij zdjęcie w podglądzie, aby je wybrać.';
+        setNudgeButtonsDisabled(true);
+        return;
+      }
+      const pos = getCropPosition(selectedItemId);
+      selectedCropInfoEl.textContent = `${selectedItemName} | X: ${pos.x.toFixed(1)}% | Y: ${pos.y.toFixed(1)}%`;
+      setNudgeButtonsDisabled(false);
+    }
+
+    function selectItem(itemId, itemName) {
+      selectedItemId = itemId;
+      selectedItemName = itemName;
+      refreshSelectionStyles();
+      updateSelectedCropInfo();
+    }
+
+    function applyCropToVisibleImages(itemId) {
+      const images = pagesEl.querySelectorAll('img[data-item-id]');
+      images.forEach((img) => {
+        if (img.dataset.itemId === itemId) {
+          applyObjectPosition(img, itemId);
+        }
+      });
+    }
+
+    function clamp(value, min, max) {
+      return Math.max(min, Math.min(max, value));
+    }
+
+    function chooseGrid(count, widthMm, heightMm) {
+      let best = null;
+      for (let cols = 1; cols <= count; cols += 1) {
+        const rows = Math.ceil(count / cols);
+        const cellW = widthMm / cols;
+        const cellH = heightMm / rows;
+        const ratio = cellW / cellH;
+        const distanceFromPhotoRatio = Math.abs(Math.log(ratio / (3 / 2)));
+        const emptySlots = (rows * cols) - count;
+        const score = distanceFromPhotoRatio + (emptySlots * 0.08);
+
+        if (!best || score < best.score) {
+          best = { cols, rows, score };
+        }
+      }
+      return { cols: best.cols, rows: best.rows };
+    }
+
+    function chunkArray(array, size) {
+      const chunks = [];
+      for (let i = 0; i < array.length; i += size) {
+        chunks.push(array.slice(i, i + size));
+      }
+      return chunks;
+    }
+
+    function toPx(mm) {
+      return Math.round(mm * MM_TO_PX);
+    }
+
+    function getA4SizeMm(orientation) {
+      if (orientation === 'landscape') {
+        return { widthMm: A4_PORTRAIT.heightMm, heightMm: A4_PORTRAIT.widthMm };
+      }
+      return { ...A4_PORTRAIT };
+    }
+
+    function getCropPosition(itemId) {
+      const existing = cropPositions.get(itemId);
+      if (existing) {
+        return existing;
+      }
+      const centered = { x: 50, y: 50 };
+      cropPositions.set(itemId, centered);
+      return centered;
+    }
+
+    function setCropPosition(itemId, x, y) {
+      cropPositions.set(itemId, {
+        x: clamp(x, 0, 100),
+        y: clamp(y, 0, 100),
+      });
+      scheduleCropPersist();
+      if (selectedItemId === itemId) {
+        updateSelectedCropInfo();
+      }
+    }
+
+    function applyObjectPosition(img, itemId) {
+      const pos = getCropPosition(itemId);
+      img.style.objectPosition = `${pos.x}% ${pos.y}%`;
+    }
+
+    function enablePanning(cell, img, item, fitMode) {
+      applyObjectPosition(img, item.id);
+      if (fitMode !== 'cover') {
+        return;
+      }
+
+      cell.classList.add('is-pannable');
+
+      const updateFromPointer = (event) => {
+        const rect = cell.getBoundingClientRect();
+        const x = ((event.clientX - rect.left) / rect.width) * 100;
+        const y = ((event.clientY - rect.top) / rect.height) * 100;
+        setCropPosition(item.id, x, y);
+        applyObjectPosition(img, item.id);
+      };
+
+      const stopDragging = (event) => {
+        cell.classList.remove('dragging');
+        if (event.pointerId !== undefined && cell.hasPointerCapture(event.pointerId)) {
+          cell.releasePointerCapture(event.pointerId);
+        }
+      };
+
+      cell.addEventListener('pointerdown', (event) => {
+        if (event.button !== 0) {
+          return;
+        }
+        event.preventDefault();
+        selectItem(item.id, item.name);
+        cell.classList.add('dragging');
+        cell.setPointerCapture(event.pointerId);
+        updateFromPointer(event);
+      });
+
+      cell.addEventListener('pointermove', (event) => {
+        if (!cell.classList.contains('dragging')) {
+          return;
+        }
+        event.preventDefault();
+        updateFromPointer(event);
+      });
+
+      cell.addEventListener('pointerup', stopDragging);
+      cell.addEventListener('pointercancel', stopDragging);
+      cell.addEventListener('dblclick', () => {
+        setCropPosition(item.id, 50, 50);
+        applyObjectPosition(img, item.id);
+      });
+    }
+
+    function buildPage(images, pageIndex, options) {
+      const { photosPerPage, orientation, marginMm, gapMm, fitMode, showLabels } = options;
+      const a4 = getA4SizeMm(orientation);
+      const contentW = Math.max(10, a4.widthMm - (2 * marginMm));
+      const contentH = Math.max(10, a4.heightMm - (2 * marginMm));
+      const grid = chooseGrid(photosPerPage, contentW, contentH);
+      const pageWidthPx = toPx(a4.widthMm);
+      const pageHeightPx = toPx(a4.heightMm);
+
+      const sheet = document.createElement('article');
+      sheet.className = 'sheet';
+      sheet.style.width = `${pageWidthPx}px`;
+      sheet.style.height = `${pageHeightPx}px`;
+
+      const number = document.createElement('div');
+      number.className = 'sheet-number';
+      number.textContent = `Strona ${pageIndex + 1}`;
+      sheet.appendChild(number);
+
+      const gridEl = document.createElement('div');
+      gridEl.className = 'sheet-grid';
+      gridEl.style.padding = `${toPx(marginMm)}px`;
+      gridEl.style.gap = `${toPx(gapMm)}px`;
+      gridEl.style.gridTemplateColumns = `repeat(${grid.cols}, minmax(0, 1fr))`;
+      gridEl.style.gridTemplateRows = `repeat(${grid.rows}, minmax(0, 1fr))`;
+
+      const slots = grid.cols * grid.rows;
+      for (let i = 0; i < slots; i += 1) {
+        const cell = document.createElement('div');
+        cell.className = 'photo-cell';
+
+        const item = images[i];
+        if (item) {
+          const img = document.createElement('img');
+          img.src = item.url;
+          img.alt = item.name;
+          img.dataset.itemId = item.id;
+          img.loading = 'lazy';
+          img.draggable = false;
+          img.className = fitMode === 'contain' ? 'fit-contain' : 'fit-cover';
+          img.addEventListener('dragstart', (event) => event.preventDefault());
+          enablePanning(cell, img, item, fitMode);
+          cell.dataset.itemId = item.id;
+          cell.addEventListener('click', () => selectItem(item.id, item.name));
+          if (selectedItemId === item.id) {
+            cell.classList.add('is-selected');
+          }
+          cell.appendChild(img);
+
+          if (showLabels) {
+            const label = document.createElement('span');
+            label.className = 'cell-label';
+            label.textContent = String((pageIndex * photosPerPage) + i + 1);
+            cell.appendChild(label);
+          }
+        }
+
+        gridEl.appendChild(cell);
+      }
+
+      sheet.appendChild(gridEl);
+      return { sheet, grid };
+    }
+
+    function releasePreviousUrls() {
+      imageItems.forEach((item) => URL.revokeObjectURL(item.url));
+      imageItems = [];
+    }
+
+    function readImagesFromInput(files) {
+      releasePreviousUrls();
+      const images = [...files]
+        .filter((file) => file.type.startsWith('image/'))
+        .sort(byNameAsc)
+        .map((file, index) => ({
+          id: file.webkitRelativePath || `${file.name}-${index}`,
+          name: file.name,
+          file,
+          url: URL.createObjectURL(file),
+        }));
+      imageItems = images;
+      if (selectedItemId && !imageItems.some((item) => item.id === selectedItemId)) {
+        selectedItemId = null;
+        selectedItemName = '';
+      }
+      updateSelectedCropInfo();
+    }
+
+    function getNudgeStep() {
+      const value = clamp(Number(nudgeStepInput.value) || 2, 0.5, 20);
+      nudgeStepInput.value = String(value);
+      return value;
+    }
+
+    function nudgeSelected(dx, dy) {
+      if (!selectedItemId) {
+        return;
+      }
+      const step = getNudgeStep();
+      const current = getCropPosition(selectedItemId);
+      setCropPosition(selectedItemId, current.x + (dx * step), current.y + (dy * step));
+      applyCropToVisibleImages(selectedItemId);
+      refreshSelectionStyles();
+    }
+
+    function getOptions() {
+      const photosPerPage = clamp(Number(photosPerPageInput.value) || 1, 1, 64);
+      const marginMm = clamp(Number(marginInput.value) || 0, 0, 40);
+      const gapMm = clamp(Number(gapInput.value) || 0, 0, 20);
+
+      photosPerPageInput.value = String(photosPerPage);
+      marginInput.value = String(marginMm);
+      gapInput.value = String(gapMm);
+
+      return {
+        photosPerPage,
+        orientation: orientationSelect.value,
+        marginMm,
+        gapMm,
+        fitMode: fitModeSelect.value,
+        showLabels: showLabelsSelect.value === 'yes',
+      };
+    }
+
+    function render() {
+      setError('');
+      pagesEl.innerHTML = '';
+
+      if (!imageItems.length) {
+        metaEl.innerHTML = 'Brak załadowanych zdjęć. Wybierz folder, aby rozpocząć.';
+        return;
+      }
+
+      const options = getOptions();
+      if (options.marginMm * 2 >= Math.min(...Object.values(getA4SizeMm(options.orientation)))) {
+        setError('Margines jest zbyt duży dla formatu A4. Zmniejsz wartość.');
+        return;
+      }
+
+      const chunks = chunkArray(imageItems, options.photosPerPage);
+      let lastGrid = { cols: 1, rows: 1 };
+      chunks.forEach((group, pageIndex) => {
+        const { sheet, grid } = buildPage(group, pageIndex, options);
+        lastGrid = grid;
+        pagesEl.appendChild(sheet);
+      });
+      refreshSelectionStyles();
+      updateSelectedCropInfo();
+
+      metaEl.innerHTML = [
+        `<strong>Zdjęcia:</strong> ${imageItems.length}`,
+        `<strong>Kartek A4:</strong> ${chunks.length}`,
+        `<strong>Układ:</strong> ${lastGrid.cols} × ${lastGrid.rows} (${options.photosPerPage} zdjęć/stronę)`,
+        `<strong>Orientacja:</strong> ${options.orientation === 'portrait' ? 'pionowa' : 'pozioma'}`,
+      ].join('<br>');
+    }
+
+    function updatePageRule() {
+      const styleTagId = 'dynamic-print-page-size';
+      const existing = document.getElementById(styleTagId);
+      if (existing) {
+        existing.remove();
+      }
+
+      const style = document.createElement('style');
+      style.id = styleTagId;
+      const orientation = orientationSelect.value;
+      style.textContent = `@media print { @page { size: A4 ${orientation}; margin: 0; } }`;
+      document.head.appendChild(style);
+    }
+
+    folderInput.addEventListener('change', (event) => {
+      const files = event.target.files;
+      if (!files || !files.length) {
+        releasePreviousUrls();
+        render();
+        return;
+      }
+
+      readImagesFromInput(files);
+      render();
+    });
+
+    [photosPerPageInput, orientationSelect, marginInput, gapInput, fitModeSelect, showLabelsSelect]
+      .forEach((control) => control.addEventListener('change', render));
+
+    renderBtn.addEventListener('click', render);
+    printBtn.addEventListener('click', () => {
+      updatePageRule();
+      window.print();
+    });
+    resetCropBtn.addEventListener('click', () => {
+      imageItems.forEach((item) => setCropPosition(item.id, 50, 50));
+      render();
+    });
+    nudgeUpBtn.addEventListener('click', () => nudgeSelected(0, -1));
+    nudgeDownBtn.addEventListener('click', () => nudgeSelected(0, 1));
+    nudgeLeftBtn.addEventListener('click', () => nudgeSelected(-1, 0));
+    nudgeRightBtn.addEventListener('click', () => nudgeSelected(1, 0));
+
+    window.addEventListener('beforeunload', () => {
+      scheduleCropPersist();
+      releasePreviousUrls();
+    });
+
+    loadCropPositionsFromStorage();
+    updateSelectedCropInfo();
+    render();
+  </script>
+</body>
+</html>
