@@ -30,7 +30,7 @@
     }
 
     .app {
-      max-width: 1280px;
+      max-width: 1600px;
       margin: 0 auto;
       padding: 20px;
       display: grid;
@@ -39,20 +39,43 @@
     }
 
     .panel,
-    .preview-wrap {
+    .preview-wrap,
+    .layout-panel {
       background: var(--surface);
       border: 1px solid var(--line);
       border-radius: 14px;
     }
 
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      gap: 20px;
+      align-items: start;
+    }
+
     .panel {
-      padding: 18px;
+      padding: 16px;
       position: sticky;
       top: 14px;
       height: fit-content;
       max-height: calc(100vh - 28px);
       overflow-y: auto;
       overscroll-behavior: contain;
+    }
+
+    .layout-panel {
+      padding: 16px;
+      position: sticky;
+      top: 14px;
+      max-height: calc(100vh - 28px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    .panel-header {
+      margin-bottom: 14px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #edf2f7;
     }
 
     h1 {
@@ -62,14 +85,31 @@
     }
 
     .subtitle {
-      margin: 0 0 16px;
+      margin: 0;
       color: var(--muted);
       font-size: 0.95rem;
       line-height: 1.35;
     }
 
-    .control {
+    .sidebar-section {
       margin-bottom: 12px;
+      padding: 12px;
+      border: 1px solid #e5edf6;
+      border-radius: 12px;
+      background: #fcfdff;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 0.86rem;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: #526071;
+      font-weight: 700;
+    }
+
+    .control {
+      margin-bottom: 10px;
     }
 
     label {
@@ -93,6 +133,13 @@
       color: var(--ink);
     }
 
+    select {
+      padding-right: 36px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+
     input:focus,
     select:focus,
     button:focus {
@@ -105,6 +152,59 @@
       padding: 8px;
     }
 
+    .visually-hidden {
+      position: absolute !important;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    .folder-picker {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 8px 10px;
+      background: #fff;
+      min-height: 52px;
+    }
+
+    .folder-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+      padding: 8px 12px;
+      border-radius: 8px;
+      border: 1px solid #c6d4e6;
+      background: #f8fbff;
+      color: var(--ink);
+      font-size: 0.9rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.12s ease, border-color 0.12s ease;
+      flex: 0 0 auto;
+    }
+
+    .folder-btn:hover {
+      background: #eef6ff;
+      border-color: #a8bfd8;
+    }
+
+    .folder-status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
     .row {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -114,12 +214,13 @@
     .actions {
       display: flex;
       gap: 10px;
-      margin-top: 14px;
+      margin-top: 10px;
     }
 
     .actions button {
       cursor: pointer;
       transition: transform 0.08s ease, box-shadow 0.12s ease;
+      white-space: nowrap;
     }
 
     .actions button:hover {
@@ -139,7 +240,7 @@
     }
 
     .meta {
-      margin-top: 14px;
+      margin-top: 0;
       padding: 10px 12px;
       background: #f8fafc;
       border: 1px solid var(--line);
@@ -152,11 +253,11 @@
     .meta strong { color: var(--ink); }
 
     .crop-tools {
-      margin-top: 12px;
-      padding: 10px 12px;
-      background: #f8fafc;
-      border: 1px solid var(--line);
-      border-radius: 10px;
+      margin-top: 0;
+      padding: 0;
+      background: transparent;
+      border: 0;
+      border-radius: 0;
     }
 
     .crop-title {
@@ -174,23 +275,54 @@
 
     .nudge-grid {
       display: grid;
-      grid-template-columns: repeat(3, 44px);
+      grid-template-columns: repeat(3, 84px);
+      grid-template-rows: repeat(2, 52px);
       justify-content: center;
-      gap: 6px;
-      margin-bottom: 8px;
+      align-items: center;
+      gap: 8px 10px;
+      margin: 2px 0 10px;
     }
 
     .nudge-grid button {
-      padding: 8px 0;
+      height: 52px;
+      padding: 0;
       border-radius: 8px;
       font-weight: 700;
+      font-size: 1.7rem;
       line-height: 1;
       cursor: pointer;
     }
 
+    .nudge-grid span {
+      width: 84px;
+      height: 52px;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    #nudgeUpBtn {
+      grid-column: 2;
+      grid-row: 1;
+    }
+
+    #nudgeLeftBtn {
+      grid-column: 1;
+      grid-row: 2;
+    }
+
+    #nudgeDownBtn {
+      grid-column: 2;
+      grid-row: 2;
+    }
+
+    #nudgeRightBtn {
+      grid-column: 3;
+      grid-row: 2;
+    }
+
     .nudge-step {
       display: grid;
-      grid-template-columns: 1fr 90px;
+      grid-template-columns: 1fr 108px;
       gap: 8px;
       align-items: center;
     }
@@ -221,7 +353,7 @@
 
     .selected-controls .inline {
       display: grid;
-      grid-template-columns: 1fr 64px;
+      grid-template-columns: 1fr 90px;
       gap: 8px;
       align-items: center;
     }
@@ -239,7 +371,7 @@
 
     .preview-wrap {
       padding: 16px;
-      min-height: 70vh;
+      min-height: 78vh;
     }
 
     .preview-header {
@@ -372,6 +504,17 @@
       border: 1px solid #e5e7eb;
     }
 
+    @media (max-width: 1240px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .layout-panel {
+        position: static;
+        max-height: none;
+      }
+    }
+
     @media (max-width: 1040px) {
       .app {
         grid-template-columns: 1fr;
@@ -379,6 +522,7 @@
 
       .panel {
         position: static;
+        max-height: none;
       }
     }
 
@@ -393,6 +537,7 @@
       }
 
       .panel,
+      .layout-panel,
       .preview-header,
       .sheet-number,
       .cell-label {
@@ -400,6 +545,7 @@
       }
 
       .app,
+      .workspace,
       .preview-wrap,
       .pages {
         margin: 0;
@@ -440,123 +586,148 @@
 <body>
   <div class="app">
     <aside class="panel">
-      <h1>MultiPrinter A4</h1>
-      <p class="subtitle">Załaduj folder zdjęć, wybierz ile zdjęć ma trafić na jedną kartkę A4 i wydrukuj gotowy układ.</p>
-
-      <div class="control">
-        <label for="folderInput">Folder ze zdjęciami</label>
-        <input id="folderInput" type="file" webkitdirectory directory multiple accept="image/*" />
+      <div class="panel-header">
+        <h1>Edycja zdjęcia</h1>
+        <p class="subtitle">Zaznacz zdjęcie w podglądzie i dopasuj jego kadr, zoom oraz obrót.</p>
       </div>
 
-      <div class="row">
-        <div class="control">
-          <label for="photosPerPage">Zdjęć na stronę</label>
-          <input id="photosPerPage" type="number" min="1" max="64" value="6" />
-        </div>
-        <div class="control">
-          <label for="orientation">Orientacja A4</label>
-          <select id="orientation">
-            <option value="portrait">Pionowa</option>
-            <option value="landscape">Pozioma</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="row">
-        <div class="control">
-          <label for="marginMm">Margines (mm)</label>
-          <input id="marginMm" type="number" min="0" max="40" step="1" value="8" />
-        </div>
-        <div class="control">
-          <label for="gapMm">Odstęp (mm)</label>
-          <input id="gapMm" type="number" min="0" max="20" step="1" value="3" />
-        </div>
-      </div>
-      <div class="control">
-        <label for="layoutTemplate">Szablon układu</label>
-        <select id="layoutTemplate">
-          <option value="auto">Auto (siatka)</option>
-          <option value="grid4">2 × 2 (4 zdjęcia)</option>
-          <option value="grid6">3 × 2 (6 zdjęć)</option>
-          <option value="hero5">1 duże + 4 małe (5 zdjęć)</option>
-        </select>
-      </div>
-
-      <div class="row">
-        <div class="control">
-          <label for="fitMode">Dopasowanie zdjęcia</label>
-          <select id="fitMode">
-            <option value="cover">Wypełnij (przytnij)</option>
-            <option value="contain">Całe zdjęcie (paski)</option>
-          </select>
-        </div>
-        <div class="control">
-          <label for="barFillMode">Wypełnienie pasków</label>
-          <select id="barFillMode">
-            <option value="white">Białe</option>
-            <option value="blur">Rozmyte tło</option>
-            <option value="black">Czarne</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div class="control">
-          <label for="showLabels">Numeracja komórek</label>
-          <select id="showLabels">
-            <option value="no">Nie</option>
-            <option value="yes">Tak</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button id="renderBtn" class="btn-secondary" type="button">Odśwież układ</button>
-        <button id="printBtn" class="btn-primary" type="button">Drukuj / PDF</button>
-      </div>
-      <div class="actions">
-        <button id="resetCropBtn" class="btn-secondary" type="button">Reset kadrowania</button>
-      </div>
-      <div class="crop-tools">
-        <p class="crop-title">Precyzyjne kadrowanie</p>
-        <p id="selectedCropInfo" class="crop-selected">Kliknij zdjęcie w podglądzie, aby je wybrać.</p>
-        <div class="nudge-grid">
-          <button id="nudgeUpBtn" type="button" aria-label="Przesuń kadr w górę">↑</button>
-          <span></span>
-          <span></span>
-          <button id="nudgeLeftBtn" type="button" aria-label="Przesuń kadr w lewo">←</button>
-          <button id="nudgeDownBtn" type="button" aria-label="Przesuń kadr w dół">↓</button>
-          <button id="nudgeRightBtn" type="button" aria-label="Przesuń kadr w prawo">→</button>
-        </div>
-        <div class="nudge-step">
-          <label for="nudgeStepInput">Krok przesunięcia (%)</label>
-          <input id="nudgeStepInput" type="number" min="0.5" max="20" step="0.5" value="2" />
-        </div>
-        <div class="selected-controls">
-          <div class="inline">
-            <label for="zoomRangeInput">Zoom (%)</label>
-            <input id="zoomValueInput" type="number" min="50" max="250" step="1" value="100" />
+      <section class="sidebar-section">
+        <div class="crop-tools">
+          <p class="crop-title">Precyzyjne kadrowanie</p>
+          <p id="selectedCropInfo" class="crop-selected">Kliknij zdjęcie w podglądzie, aby je wybrać.</p>
+          <div class="nudge-grid">
+            <button id="nudgeUpBtn" type="button" aria-label="Przesuń kadr w górę">↑</button>
+            <span></span>
+            <span></span>
+            <button id="nudgeLeftBtn" type="button" aria-label="Przesuń kadr w lewo">←</button>
+            <button id="nudgeDownBtn" type="button" aria-label="Przesuń kadr w dół">↓</button>
+            <button id="nudgeRightBtn" type="button" aria-label="Przesuń kadr w prawo">→</button>
           </div>
-          <input id="zoomRangeInput" type="range" min="50" max="250" step="1" value="100" />
+          <div class="nudge-step">
+            <label for="nudgeStepInput">Krok przesunięcia (%)</label>
+            <input id="nudgeStepInput" type="number" min="0.5" max="20" step="0.5" value="2" />
+          </div>
+          <div class="selected-controls">
+            <div class="inline">
+              <label for="zoomRangeInput">Zoom (%)</label>
+              <input id="zoomValueInput" type="number" min="50" max="250" step="1" value="100" />
+            </div>
+            <input id="zoomRangeInput" type="range" min="50" max="250" step="1" value="100" />
+          </div>
+          <div class="nudge-actions">
+            <button id="rotateLeftBtn" type="button">Obróć -90°</button>
+            <button id="rotateRightBtn" type="button">Obróć +90°</button>
+          </div>
+          <div class="actions">
+            <button id="resetSelectedCropBtn" class="btn-secondary" type="button">Reset wybranego zdjęcia</button>
+          </div>
         </div>
-        <div class="nudge-actions">
-          <button id="rotateLeftBtn" type="button">Obróć -90°</button>
-          <button id="rotateRightBtn" type="button">Obróć +90°</button>
-        </div>
-        <div class="actions">
-          <button id="resetSelectedCropBtn" class="btn-secondary" type="button">Reset wybranego zdjęcia</button>
-        </div>
-      </div>
-
-      <div id="meta" class="meta">Brak załadowanych zdjęć.</div>
-      <div id="error" class="error" aria-live="polite"></div>
+      </section>
     </aside>
 
-    <main class="preview-wrap">
-      <div class="preview-header">
-        <h2>Podgląd stron A4</h2>
-        <p>Sprawdź układ i użyj „Drukuj / PDF”.</p>
-      </div>
-      <section id="pages" class="pages"></section>
+    <main class="workspace">
+      <section class="preview-wrap">
+        <div class="preview-header">
+          <h2>Podgląd stron A4</h2>
+          <p>Sprawdź układ i użyj „Drukuj / PDF”.</p>
+        </div>
+        <section id="pages" class="pages"></section>
+      </section>
+
+      <aside class="layout-panel">
+        <div class="panel-header">
+          <h1>Ustawienia układu</h1>
+          <p class="subtitle">Wybierz folder, format siatki i parametry wydruku całej strony.</p>
+        </div>
+
+        <section class="sidebar-section">
+          <p class="section-title">Pliki</p>
+          <div class="control">
+            <label for="folderInput">Folder ze zdjęciami</label>
+            <div class="folder-picker">
+              <input id="folderInput" class="visually-hidden" type="file" webkitdirectory directory multiple accept="image/*" />
+              <label for="folderInput" class="folder-btn">Wybierz folder</label>
+              <span id="folderStatus" class="folder-status">Nie wybrano folderu</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="sidebar-section">
+          <p class="section-title">Układ Strony</p>
+          <div class="row">
+            <div class="control">
+              <label for="photosPerPage">Zdjęć na stronę</label>
+              <input id="photosPerPage" type="number" min="1" max="64" value="6" />
+            </div>
+            <div class="control">
+              <label for="orientation">Orientacja A4</label>
+              <select id="orientation">
+                <option value="portrait">Pionowa</option>
+                <option value="landscape">Pozioma</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="control">
+              <label for="marginMm">Margines (mm)</label>
+              <input id="marginMm" type="number" min="0" max="40" step="1" value="8" />
+            </div>
+            <div class="control">
+              <label for="gapMm">Odstęp (mm)</label>
+              <input id="gapMm" type="number" min="0" max="20" step="1" value="3" />
+            </div>
+          </div>
+
+          <div class="control">
+            <label for="layoutTemplate">Szablon układu</label>
+            <select id="layoutTemplate">
+              <option value="auto">Auto (siatka)</option>
+              <option value="grid4">2 × 2 (4 zdjęcia)</option>
+              <option value="grid6">3 × 2 (6 zdjęć)</option>
+              <option value="hero5">1 duże + 4 małe (5 zdjęć)</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="fitMode">Dopasowanie zdjęcia</label>
+            <select id="fitMode">
+              <option value="cover">Wypełnij (przytnij)</option>
+              <option value="contain">Całe zdjęcie (paski)</option>
+            </select>
+          </div>
+          <div class="control">
+            <label for="barFillMode">Wypełnienie pasków</label>
+            <select id="barFillMode">
+              <option value="white">Białe</option>
+              <option value="blur">Rozmyte tło</option>
+              <option value="black">Czarne</option>
+            </select>
+          </div>
+
+          <div class="control">
+            <label for="showLabels">Numeracja komórek</label>
+            <select id="showLabels">
+              <option value="no">Nie</option>
+              <option value="yes">Tak</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button id="renderBtn" class="btn-secondary" type="button">Odśwież układ</button>
+            <button id="printBtn" class="btn-primary" type="button">Drukuj / PDF</button>
+          </div>
+          <div class="actions">
+            <button id="resetCropBtn" class="btn-secondary" type="button">Reset kadrowania</button>
+          </div>
+        </section>
+
+        <section class="sidebar-section">
+          <p class="section-title">Podsumowanie</p>
+          <div id="meta" class="meta">Brak załadowanych zdjęć.</div>
+        </section>
+        <div id="error" class="error" aria-live="polite"></div>
+      </aside>
     </main>
   </div>
 
@@ -565,6 +736,7 @@
     const A4_PORTRAIT = { widthMm: 210, heightMm: 297 };
 
     const folderInput = document.getElementById('folderInput');
+    const folderStatusEl = document.getElementById('folderStatus');
     const photosPerPageInput = document.getElementById('photosPerPage');
     const orientationSelect = document.getElementById('orientation');
     const marginInput = document.getElementById('marginMm');
@@ -602,6 +774,22 @@
 
     function setError(message) {
       errorEl.textContent = message || '';
+    }
+
+    function updateFolderStatus(files, imageCount) {
+      if (!folderStatusEl) {
+        return;
+      }
+
+      if (!files || !files.length) {
+        folderStatusEl.textContent = 'Nie wybrano folderu';
+        return;
+      }
+
+      const first = files[0];
+      const relativePath = first.webkitRelativePath || first.name || '';
+      const folderName = relativePath.split('/')[0] || 'Folder';
+      folderStatusEl.textContent = `${folderName} • zdjęć: ${imageCount}`;
     }
 
     function scheduleCropPersist() {
@@ -1194,11 +1382,13 @@
       const files = event.target.files;
       if (!files || !files.length) {
         releasePreviousUrls();
+        updateFolderStatus(null, 0);
         render();
         return;
       }
 
       readImagesFromInput(files);
+      updateFolderStatus(files, imageItems.length);
       render();
     });
 
@@ -1215,10 +1405,10 @@
       imageItems.forEach((item) => setCropPosition(item.id, 50, 50, 100, 0));
       render();
     });
-    nudgeUpBtn.addEventListener('click', () => nudgeSelected(0, -1));
-    nudgeDownBtn.addEventListener('click', () => nudgeSelected(0, 1));
-    nudgeLeftBtn.addEventListener('click', () => nudgeSelected(-1, 0));
-    nudgeRightBtn.addEventListener('click', () => nudgeSelected(1, 0));
+    nudgeUpBtn.addEventListener('click', () => nudgeSelected(0, 1));
+    nudgeDownBtn.addEventListener('click', () => nudgeSelected(0, -1));
+    nudgeLeftBtn.addEventListener('click', () => nudgeSelected(1, 0));
+    nudgeRightBtn.addEventListener('click', () => nudgeSelected(-1, 0));
     zoomRangeInput.addEventListener('input', () => {
       zoomValueInput.value = zoomRangeInput.value;
       setSelectedZoom(Number(zoomRangeInput.value));
@@ -1249,6 +1439,7 @@
     updateSelectedCropInfo();
     setNudgeButtonsDisabled(true);
     syncPhotosPerPageControl();
+    updateFolderStatus(null, 0);
     render();
   </script>
 </body>
