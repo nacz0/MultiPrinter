@@ -362,6 +362,13 @@
       padding: 0;
     }
 
+    .filters-help {
+      margin: 4px 0 0;
+      font-size: 0.82rem;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
     .error {
       margin-top: 10px;
       color: var(--danger);
@@ -704,6 +711,59 @@
               <option value="black">Czarne</option>
             </select>
           </div>
+          <div class="control">
+            <label for="photoFilterPreset">Filtr zdjęć (preset)</label>
+            <select id="photoFilterPreset">
+              <option value="none">Brak</option>
+              <option value="auto">Auto poprawa</option>
+              <option value="portrait">Portret (cieplejszy)</option>
+              <option value="landscape">Krajobraz (żywszy)</option>
+              <option value="bw">Czarno-biały</option>
+              <option value="vintage">Vintage</option>
+              <option value="custom">Własny (ręczny)</option>
+            </select>
+          </div>
+          <div class="row">
+            <div class="control">
+              <label for="filterBrightness">Jasność (%)</label>
+              <input id="filterBrightness" type="number" min="50" max="170" step="1" value="100" />
+            </div>
+            <div class="control">
+              <label for="filterContrast">Kontrast (%)</label>
+              <input id="filterContrast" type="number" min="50" max="170" step="1" value="100" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="control">
+              <label for="filterSaturation">Nasycenie (%)</label>
+              <input id="filterSaturation" type="number" min="0" max="220" step="1" value="100" />
+            </div>
+            <div class="control">
+              <label for="filterSepia">Sepia (%)</label>
+              <input id="filterSepia" type="number" min="0" max="100" step="1" value="0" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="control">
+              <label for="filterGrayscale">Czarno-biały (%)</label>
+              <input id="filterGrayscale" type="number" min="0" max="100" step="1" value="0" />
+            </div>
+            <div class="control">
+              <label for="filterHue">Przesunięcie barwy (deg)</label>
+              <input id="filterHue" type="number" min="-180" max="180" step="1" value="0" />
+            </div>
+          </div>
+          <div class="row">
+            <div class="control">
+              <label for="filterBlur">Rozmycie (px)</label>
+              <input id="filterBlur" type="number" min="0" max="4" step="0.1" value="0" />
+            </div>
+            <div class="control">
+              <label>&nbsp;</label>
+              <button id="resetFilterBtn" class="btn-secondary" type="button">Reset filtrów</button>
+            </div>
+          </div>
+          <p class="filters-help">Wybierz preset i dopracuj parametry ręcznie. Zmiana od razu aktualizuje podgląd.</p>
 
           <div class="control">
             <label for="showLabels">Numeracja komórek</label>
@@ -744,6 +804,15 @@
     const layoutTemplateSelect = document.getElementById('layoutTemplate');
     const fitModeSelect = document.getElementById('fitMode');
     const barFillModeSelect = document.getElementById('barFillMode');
+    const photoFilterPresetSelect = document.getElementById('photoFilterPreset');
+    const filterBrightnessInput = document.getElementById('filterBrightness');
+    const filterContrastInput = document.getElementById('filterContrast');
+    const filterSaturationInput = document.getElementById('filterSaturation');
+    const filterSepiaInput = document.getElementById('filterSepia');
+    const filterGrayscaleInput = document.getElementById('filterGrayscale');
+    const filterHueInput = document.getElementById('filterHue');
+    const filterBlurInput = document.getElementById('filterBlur');
+    const resetFilterBtn = document.getElementById('resetFilterBtn');
     const showLabelsSelect = document.getElementById('showLabels');
     const renderBtn = document.getElementById('renderBtn');
     const printBtn = document.getElementById('printBtn');
@@ -771,6 +840,14 @@
     let cropPersistTimer = null;
 
     const byNameAsc = (a, b) => a.name.localeCompare(b.name, 'pl', { numeric: true, sensitivity: 'base' });
+    const PHOTO_FILTER_PRESETS = Object.freeze({
+      none: { brightness: 100, contrast: 100, saturation: 100, sepia: 0, grayscale: 0, hue: 0, blur: 0 },
+      auto: { brightness: 104, contrast: 108, saturation: 112, sepia: 0, grayscale: 0, hue: 0, blur: 0 },
+      portrait: { brightness: 103, contrast: 104, saturation: 106, sepia: 16, grayscale: 0, hue: -8, blur: 0 },
+      landscape: { brightness: 102, contrast: 114, saturation: 125, sepia: 0, grayscale: 0, hue: -3, blur: 0 },
+      bw: { brightness: 102, contrast: 118, saturation: 40, sepia: 0, grayscale: 100, hue: 0, blur: 0 },
+      vintage: { brightness: 96, contrast: 92, saturation: 86, sepia: 35, grayscale: 10, hue: -6, blur: 0.2 },
+    });
 
     function setError(message) {
       errorEl.textContent = message || '';
@@ -899,6 +976,81 @@
       return Math.max(min, Math.min(max, value));
     }
 
+    function getPhotoFilterSettings() {
+      const readNumber = (value, fallback) => {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : fallback;
+      };
+      const settings = {
+        brightness: clamp(readNumber(filterBrightnessInput.value, 100), 50, 170),
+        contrast: clamp(readNumber(filterContrastInput.value, 100), 50, 170),
+        saturation: clamp(readNumber(filterSaturationInput.value, 100), 0, 220),
+        sepia: clamp(readNumber(filterSepiaInput.value, 0), 0, 100),
+        grayscale: clamp(readNumber(filterGrayscaleInput.value, 0), 0, 100),
+        hue: clamp(readNumber(filterHueInput.value, 0), -180, 180),
+        blur: clamp(readNumber(filterBlurInput.value, 0), 0, 4),
+      };
+
+      filterBrightnessInput.value = String(Math.round(settings.brightness));
+      filterContrastInput.value = String(Math.round(settings.contrast));
+      filterSaturationInput.value = String(Math.round(settings.saturation));
+      filterSepiaInput.value = String(Math.round(settings.sepia));
+      filterGrayscaleInput.value = String(Math.round(settings.grayscale));
+      filterHueInput.value = String(Math.round(settings.hue));
+      filterBlurInput.value = settings.blur.toFixed(1);
+
+      return settings;
+    }
+
+    function buildPhotoFilterCss(settings) {
+      return [
+        `brightness(${settings.brightness}%)`,
+        `contrast(${settings.contrast}%)`,
+        `saturate(${settings.saturation}%)`,
+        `sepia(${settings.sepia}%)`,
+        `grayscale(${settings.grayscale}%)`,
+        `hue-rotate(${settings.hue}deg)`,
+        `blur(${settings.blur.toFixed(1)}px)`,
+      ].join(' ');
+    }
+
+    function applyPhotoFilterToVisibleImages() {
+      const settings = getPhotoFilterSettings();
+      const cssFilter = buildPhotoFilterCss(settings);
+      const images = pagesEl.querySelectorAll('img[data-item-id]');
+      images.forEach((img) => {
+        img.style.filter = cssFilter;
+      });
+    }
+
+    function applyFilterPreset(presetKey) {
+      const preset = PHOTO_FILTER_PRESETS[presetKey];
+      if (!preset) {
+        return;
+      }
+      filterBrightnessInput.value = String(preset.brightness);
+      filterContrastInput.value = String(preset.contrast);
+      filterSaturationInput.value = String(preset.saturation);
+      filterSepiaInput.value = String(preset.sepia);
+      filterGrayscaleInput.value = String(preset.grayscale);
+      filterHueInput.value = String(preset.hue);
+      filterBlurInput.value = String(preset.blur);
+    }
+
+    function syncFilterPresetFromInputs() {
+      const current = getPhotoFilterSettings();
+      const matchingPreset = Object.entries(PHOTO_FILTER_PRESETS).find(([, preset]) => (
+        Math.abs(current.brightness - preset.brightness) < 0.01
+        && Math.abs(current.contrast - preset.contrast) < 0.01
+        && Math.abs(current.saturation - preset.saturation) < 0.01
+        && Math.abs(current.sepia - preset.sepia) < 0.01
+        && Math.abs(current.grayscale - preset.grayscale) < 0.01
+        && Math.abs(current.hue - preset.hue) < 0.01
+        && Math.abs(current.blur - preset.blur) < 0.01
+      ));
+      photoFilterPresetSelect.value = matchingPreset ? matchingPreset[0] : 'custom';
+    }
+
     function chooseGrid(count, widthMm, heightMm) {
       let best = null;
       for (let cols = 1; cols <= count; cols += 1) {
@@ -969,40 +1121,59 @@
     function applyObjectPosition(img, itemId) {
       const pos = getCropPosition(itemId);
       const baseFit = img.dataset.fitMode || 'cover';
-      img.style.objectPosition = `${pos.x}% ${pos.y}%`;
-      img.style.objectFit = 'contain';
-
       const cell = img.parentElement;
-      const cellW = cell ? cell.clientWidth : 0;
-      const cellH = cell ? cell.clientHeight : 0;
-      let naturalW = img.naturalWidth || 0;
-      let naturalH = img.naturalHeight || 0;
-      const rotated = pos.rotation % 180 !== 0;
-      if (rotated) {
-        const tmp = naturalW;
-        naturalW = naturalH;
-        naturalH = tmp;
-      }
-
-      let baseCoverScale = 1;
-      if (baseFit === 'cover' && cellW > 0 && cellH > 0 && naturalW > 0 && naturalH > 0) {
-        const containScale = Math.min(cellW / naturalW, cellH / naturalH);
-        const renderedW = naturalW * containScale;
-        const renderedH = naturalH * containScale;
-        baseCoverScale = Math.max(cellW / renderedW, cellH / renderedH);
-      }
-
       const zoom = clamp(pos.zoom, 50, 250);
+      let objectFitForRender = baseFit;
       let finalScale = zoom / 100;
-      if (baseFit === 'cover') {
-        if (zoom <= 100) {
-          finalScale = 1 + ((baseCoverScale - 1) * (zoom / 100));
-        } else {
-          finalScale = baseCoverScale * (zoom / 100);
+      let translateX = 0;
+      let translateY = 0;
+
+      if (cell) {
+        const cellW = cell.clientWidth || 0;
+        const cellH = cell.clientHeight || 0;
+        let naturalW = img.naturalWidth || 0;
+        let naturalH = img.naturalHeight || 0;
+        const rotated = pos.rotation % 180 !== 0;
+        if (rotated) {
+          const tmp = naturalW;
+          naturalW = naturalH;
+          naturalH = tmp;
+        }
+
+        if (cellW > 0 && cellH > 0 && naturalW > 0 && naturalH > 0) {
+          const containScale = Math.min(cellW / naturalW, cellH / naturalH);
+          const renderedW = naturalW * containScale;
+          const renderedH = naturalH * containScale;
+          const coverScale = Math.max(1, Math.max(cellW / renderedW, cellH / renderedH));
+
+          if (baseFit === 'cover') {
+            // Use contain+scale for all zoom levels; this removes jumps at 100 and keeps math continuous.
+            objectFitForRender = 'contain';
+            if (zoom <= 100) {
+              const t = (zoom - 50) / 50;
+              finalScale = 1 + ((coverScale - 1) * t);
+            } else {
+              finalScale = coverScale * (zoom / 100);
+            }
+          } else {
+            objectFitForRender = 'contain';
+            finalScale = zoom / 100;
+          }
+
+          const scaledW = renderedW * finalScale;
+          const scaledH = renderedH * finalScale;
+          const overflowX = Math.max(0, scaledW - cellW);
+          const overflowY = Math.max(0, scaledH - cellH);
+          const xNorm = clamp(pos.x, 0, 100);
+          const yNorm = clamp(pos.y, 0, 100);
+          translateX = ((50 - xNorm) / 50) * (overflowX / 2);
+          translateY = ((50 - yNorm) / 50) * (overflowY / 2);
         }
       }
 
-      img.style.transform = `scale(${finalScale}) rotate(${pos.rotation}deg)`;
+      img.style.objectFit = objectFitForRender;
+      img.style.objectPosition = '50% 50%';
+      img.style.transform = `translate(${translateX}px, ${translateY}px) scale(${finalScale}) rotate(${pos.rotation}deg)`;
       img.style.transformOrigin = 'center center';
 
       const bgImg = cell ? cell.querySelector('.photo-bg img') : null;
@@ -1016,17 +1187,24 @@
     function enablePanning(cell, img, item, fitMode) {
       applyObjectPosition(img, item.id);
       cell.classList.add('is-pannable');
+      let dragStart = null;
 
       const updateFromPointer = (event) => {
+        if (!dragStart) {
+          return;
+        }
         const rect = cell.getBoundingClientRect();
-        const x = ((event.clientX - rect.left) / rect.width) * 100;
-        const y = ((event.clientY - rect.top) / rect.height) * 100;
+        const deltaX = ((event.clientX - dragStart.clientX) / rect.width) * 100;
+        const deltaY = ((event.clientY - dragStart.clientY) / rect.height) * 100;
+        const x = dragStart.startX + deltaX;
+        const y = dragStart.startY + deltaY;
         setCropPosition(item.id, x, y);
         applyObjectPosition(img, item.id);
       };
 
       const stopDragging = (event) => {
         cell.classList.remove('dragging');
+        dragStart = null;
         if (event.pointerId !== undefined && cell.hasPointerCapture(event.pointerId)) {
           cell.releasePointerCapture(event.pointerId);
         }
@@ -1038,9 +1216,15 @@
         }
         event.preventDefault();
         selectItem(item.id, item.name);
+        const current = getCropPosition(item.id);
+        dragStart = {
+          clientX: event.clientX,
+          clientY: event.clientY,
+          startX: current.x,
+          startY: current.y,
+        };
         cell.classList.add('dragging');
         cell.setPointerCapture(event.pointerId);
-        updateFromPointer(event);
       });
 
       cell.addEventListener('pointermove', (event) => {
@@ -1288,6 +1472,7 @@
         layoutTemplate: layoutTemplateSelect.value,
         fitMode: fitModeSelect.value,
         barFillMode: barFillModeSelect.value,
+        photoFilterPreset: photoFilterPresetSelect.value,
         showLabels: showLabelsSelect.value === 'yes',
       };
     }
@@ -1320,12 +1505,14 @@
       });
       refreshSelectionStyles();
       updateSelectedCropInfo();
+      applyPhotoFilterToVisibleImages();
 
       metaEl.innerHTML = [
         `<strong>Zdjęcia:</strong> ${imageItems.length}`,
         `<strong>Kartek A4:</strong> ${chunks.length}`,
         `<strong>Układ:</strong> ${layout.label} (${layout.photosPerPage} zdjęć/stronę)`,
         `<strong>Orientacja:</strong> ${options.orientation === 'portrait' ? 'pionowa' : 'pozioma'}`,
+        `<strong>Filtr:</strong> ${photoFilterPresetSelect.options[photoFilterPresetSelect.selectedIndex]?.text || 'Własny'}`,
       ].join('<br>');
     }
 
@@ -1395,6 +1582,38 @@
     [photosPerPageInput, orientationSelect, marginInput, gapInput, fitModeSelect, barFillModeSelect, showLabelsSelect, layoutTemplateSelect]
       .forEach((control) => control.addEventListener('change', render));
 
+    photoFilterPresetSelect.addEventListener('change', () => {
+      if (photoFilterPresetSelect.value !== 'custom') {
+        applyFilterPreset(photoFilterPresetSelect.value);
+      }
+      render();
+    });
+
+    [
+      filterBrightnessInput,
+      filterContrastInput,
+      filterSaturationInput,
+      filterSepiaInput,
+      filterGrayscaleInput,
+      filterHueInput,
+      filterBlurInput,
+    ].forEach((control) => {
+      control.addEventListener('input', () => {
+        syncFilterPresetFromInputs();
+        applyPhotoFilterToVisibleImages();
+      });
+      control.addEventListener('change', () => {
+        syncFilterPresetFromInputs();
+        render();
+      });
+    });
+
+    resetFilterBtn.addEventListener('click', () => {
+      photoFilterPresetSelect.value = 'none';
+      applyFilterPreset('none');
+      render();
+    });
+
     renderBtn.addEventListener('click', render);
     printBtn.addEventListener('click', async () => {
       updatePageRule();
@@ -1407,8 +1626,8 @@
     });
     nudgeUpBtn.addEventListener('click', () => nudgeSelected(0, 1));
     nudgeDownBtn.addEventListener('click', () => nudgeSelected(0, -1));
-    nudgeLeftBtn.addEventListener('click', () => nudgeSelected(1, 0));
-    nudgeRightBtn.addEventListener('click', () => nudgeSelected(-1, 0));
+    nudgeLeftBtn.addEventListener('click', () => nudgeSelected(-1, 0));
+    nudgeRightBtn.addEventListener('click', () => nudgeSelected(1, 0));
     zoomRangeInput.addEventListener('input', () => {
       zoomValueInput.value = zoomRangeInput.value;
       setSelectedZoom(Number(zoomRangeInput.value));
@@ -1436,6 +1655,7 @@
     });
 
     loadCropPositionsFromStorage();
+    applyFilterPreset('none');
     updateSelectedCropInfo();
     setNudgeButtonsDisabled(true);
     syncPhotosPerPageControl();
