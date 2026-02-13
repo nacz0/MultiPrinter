@@ -1,5 +1,6 @@
 ﻿<!doctype html>
 <html lang="pl">
+
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -16,7 +17,9 @@
       --page-shadow: 0 10px 30px rgba(15, 23, 42, 0.12);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -51,6 +54,7 @@
       grid-template-columns: minmax(0, 1fr) 340px;
       gap: 20px;
       align-items: start;
+      min-width: 0;
     }
 
     .panel {
@@ -70,6 +74,7 @@
       max-height: calc(100vh - 28px);
       overflow-y: auto;
       overscroll-behavior: contain;
+      min-width: 0;
     }
 
     .panel-header {
@@ -250,7 +255,9 @@
       line-height: 1.4;
     }
 
-    .meta strong { color: var(--ink); }
+    .meta strong {
+      color: var(--ink);
+    }
 
     .crop-tools {
       margin-top: 0;
@@ -379,12 +386,15 @@
     .preview-wrap {
       padding: 16px;
       min-height: 78vh;
+      min-width: 0;
     }
 
     .preview-header {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
+      flex-wrap: wrap;
+      gap: 8px 14px;
       margin-bottom: 14px;
     }
 
@@ -397,12 +407,25 @@
       margin: 0;
       color: var(--muted);
       font-size: 0.9rem;
+      max-width: 100%;
+      text-align: right;
     }
 
     .pages {
       display: grid;
       gap: 18px;
       justify-content: center;
+      width: 100%;
+      min-width: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      padding-bottom: 2px;
+    }
+
+    .sheet-frame {
+      position: relative;
+      overflow: hidden;
+      justify-self: center;
     }
 
     .sheet {
@@ -411,41 +434,60 @@
       border: 1px solid #e5e7eb;
       position: relative;
       overflow: hidden;
-      transform-origin: top center;
+      transform-origin: top left;
     }
 
     .sheet-grid {
-      width: 100%;
-      height: 100%;
+      position: absolute;
+      inset: 0;
       display: grid;
-      align-content: stretch;
-      justify-content: stretch;
       background: #fff;
     }
 
     .photo-cell {
       background: #f3f4f6;
-      border: 1px solid #eceff3;
+      border: 1px solid #000000;
       overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
       position: relative;
+      min-width: 0;
+      min-height: 0;
     }
 
-    .photo-cell img {
+    .photo-cell>img {
+      position: absolute;
+      inset: 0;
       width: 100%;
       height: 100%;
       object-position: center;
       display: block;
+      z-index: 1;
     }
 
-    .photo-cell .fit-contain { object-fit: contain; background: #f8fafc; }
-    .photo-cell .fit-cover { object-fit: cover; }
-    .photo-cell.barfill-white { background: #ffffff; }
-    .photo-cell.barfill-black { background: #111111; }
-    .photo-cell.barfill-blur { background: #1f2933; }
-    .photo-cell.barfill-blur .fit-contain { background: transparent; }
+    .photo-cell .fit-contain {
+      object-fit: contain;
+      background: #f8fafc;
+    }
+
+    .photo-cell .fit-cover {
+      object-fit: cover;
+    }
+
+    .photo-cell.barfill-white {
+      background: #ffffff;
+    }
+
+    .photo-cell.barfill-black {
+      background: #111111;
+    }
+
+    .photo-cell.barfill-blur {
+      background: #1f2933;
+    }
+
+    .photo-cell.barfill-blur .fit-contain {
+      background: transparent;
+    }
+
     .photo-cell .photo-bg {
       position: absolute;
       inset: 0;
@@ -453,12 +495,14 @@
       pointer-events: none;
       z-index: 0;
     }
+
     .photo-cell .photo-bg::after {
       content: "";
       position: absolute;
       inset: 0;
       background: rgba(16, 24, 40, 0.16);
     }
+
     .photo-cell .photo-bg img {
       width: 100%;
       height: 100%;
@@ -469,16 +513,21 @@
       filter: blur(13px) saturate(0.9) brightness(0.92);
       opacity: 0.82;
     }
-    .photo-cell > img {
-      position: relative;
-      z-index: 1;
+
+
+    .photo-cell.is-pannable {
+      cursor: grab;
     }
-    .photo-cell.is-pannable { cursor: grab; }
-    .photo-cell.is-pannable.dragging { cursor: grabbing; }
+
+    .photo-cell.is-pannable.dragging {
+      cursor: grabbing;
+    }
+
     .photo-cell.is-selected {
       outline: 3px solid #0f766e;
       outline-offset: -3px;
     }
+
     .photo-cell.is-pannable img {
       user-select: none;
       -webkit-user-drag: none;
@@ -519,6 +568,7 @@
       .layout-panel {
         position: static;
         max-height: none;
+        min-width: 0;
       }
     }
 
@@ -530,6 +580,10 @@
       .panel {
         position: static;
         max-height: none;
+      }
+
+      .preview-header p {
+        text-align: left;
       }
     }
 
@@ -572,13 +626,23 @@
         margin: 0;
         border: 0;
         box-shadow: none;
+        transform: none !important;
+      }
+
+      .sheet-frame {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        width: auto !important;
+        height: auto !important;
+        overflow: visible !important;
         break-after: page;
         page-break-after: always;
         break-inside: avoid;
         page-break-inside: avoid;
       }
 
-      .sheet:last-child {
+      .sheet-frame:last-child {
         break-after: auto;
         page-break-after: auto;
       }
@@ -590,6 +654,7 @@
     }
   </style>
 </head>
+
 <body>
   <div class="app">
     <aside class="panel">
@@ -652,7 +717,8 @@
           <div class="control">
             <label for="folderInput">Folder ze zdjęciami</label>
             <div class="folder-picker">
-              <input id="folderInput" class="visually-hidden" type="file" webkitdirectory directory multiple accept="image/*" />
+              <input id="folderInput" class="visually-hidden" type="file" webkitdirectory directory multiple
+                accept="image/*" />
               <label for="folderInput" class="folder-btn">Wybierz folder</label>
               <span id="folderStatus" class="folder-status">Nie wybrano folderu</span>
             </div>
@@ -772,6 +838,13 @@
               <option value="yes">Tak</option>
             </select>
           </div>
+          <div class="control">
+            <label for="showSeparators">Czarne linie między zdjęciami</label>
+            <select id="showSeparators">
+              <option value="yes">Tak</option>
+              <option value="no">Nie</option>
+            </select>
+          </div>
 
           <div class="actions">
             <button id="renderBtn" class="btn-secondary" type="button">Odśwież układ</button>
@@ -814,6 +887,7 @@
     const filterBlurInput = document.getElementById('filterBlur');
     const resetFilterBtn = document.getElementById('resetFilterBtn');
     const showLabelsSelect = document.getElementById('showLabels');
+    const showSeparatorsSelect = document.getElementById('showSeparators');
     const renderBtn = document.getElementById('renderBtn');
     const printBtn = document.getElementById('printBtn');
     const resetCropBtn = document.getElementById('resetCropBtn');
@@ -1300,17 +1374,24 @@
     }
 
     function buildPage(images, pageIndex, options) {
-      const { orientation, marginMm, gapMm, fitMode, barFillMode, showLabels, layout } = options;
+      const { orientation, marginMm, gapMm, fitMode, barFillMode, showLabels, showSeparators, layout, previewScale = 1 } = options;
       const a4 = getA4SizeMm(orientation);
       const contentW = Math.max(10, a4.widthMm - (2 * marginMm));
       const contentH = Math.max(10, a4.heightMm - (2 * marginMm));
       const pageWidthPx = toPx(a4.widthMm);
       const pageHeightPx = toPx(a4.heightMm);
+      const safePreviewScale = clamp(previewScale || 1, 0.35, 1);
+
+      const frame = document.createElement('div');
+      frame.className = 'sheet-frame';
+      frame.style.width = `${Math.round(pageWidthPx * safePreviewScale)}px`;
+      frame.style.height = `${Math.round(pageHeightPx * safePreviewScale)}px`;
 
       const sheet = document.createElement('article');
       sheet.className = 'sheet';
       sheet.style.width = `${pageWidthPx}px`;
       sheet.style.height = `${pageHeightPx}px`;
+      sheet.style.transform = safePreviewScale < 0.999 ? `scale(${safePreviewScale})` : 'none';
 
       const number = document.createElement('div');
       number.className = 'sheet-number';
@@ -1328,6 +1409,7 @@
         const cell = document.createElement('div');
         cell.className = 'photo-cell';
         cell.classList.add(`barfill-${barFillMode}`);
+        cell.style.border = showSeparators ? '1px solid #000000' : '0';
         const layoutCell = layout.cells[i];
         cell.style.gridColumn = `${layoutCell.col} / span ${layoutCell.colSpan}`;
         cell.style.gridRow = `${layoutCell.row} / span ${layoutCell.rowSpan}`;
@@ -1376,7 +1458,8 @@
       }
 
       sheet.appendChild(gridEl);
-      return { sheet };
+      frame.appendChild(sheet);
+      return { frame, sheet };
     }
 
     function releasePreviousUrls() {
@@ -1474,6 +1557,7 @@
         barFillMode: barFillModeSelect.value,
         photoFilterPreset: photoFilterPresetSelect.value,
         showLabels: showLabelsSelect.value === 'yes',
+        showSeparators: showSeparatorsSelect.value === 'yes',
       };
     }
 
@@ -1496,12 +1580,15 @@
       const contentW = Math.max(10, a4.widthMm - (2 * options.marginMm));
       const contentH = Math.max(10, a4.heightMm - (2 * options.marginMm));
       const layout = getLayoutTemplate(options, contentW, contentH);
-      const renderOptions = { ...options, layout };
+      const pageWidthPx = toPx(a4.widthMm);
+      const previewWidthPx = Math.max(0, pagesEl.clientWidth - 8);
+      const previewScale = previewWidthPx > 0 ? Math.min(1, previewWidthPx / pageWidthPx) : 1;
+      const renderOptions = { ...options, layout, previewScale };
 
       const chunks = chunkArray(imageItems, layout.photosPerPage);
       chunks.forEach((group, pageIndex) => {
-        const { sheet } = buildPage(group, pageIndex, renderOptions);
-        pagesEl.appendChild(sheet);
+        const { frame } = buildPage(group, pageIndex, renderOptions);
+        pagesEl.appendChild(frame);
       });
       refreshSelectionStyles();
       updateSelectedCropInfo();
@@ -1579,8 +1666,12 @@
       render();
     });
 
-    [photosPerPageInput, orientationSelect, marginInput, gapInput, fitModeSelect, barFillModeSelect, showLabelsSelect, layoutTemplateSelect]
+    [photosPerPageInput, orientationSelect, marginInput, gapInput, fitModeSelect, barFillModeSelect, showLabelsSelect, showSeparatorsSelect, layoutTemplateSelect]
       .forEach((control) => control.addEventListener('change', render));
+
+    window.addEventListener('resize', () => {
+      render();
+    });
 
     photoFilterPresetSelect.addEventListener('change', () => {
       if (photoFilterPresetSelect.value !== 'custom') {
@@ -1663,4 +1754,5 @@
     render();
   </script>
 </body>
+
 </html>
